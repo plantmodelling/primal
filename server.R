@@ -91,9 +91,9 @@ shinyServer(
 
       }) 
       
-      train <- read_csv("~/OneDrive - UCL/03_research/Primal/www/training_data.csv")
-      test <- read_csv("~/OneDrive - UCL/03_research/Primal/www/test_data.csv")
-      global <- read_csv("~/OneDrive - UCL/03_research/Primal/www/global_estimators.csv")
+      train <- read_csv("www/training_data.csv")
+      test <- read_csv("www/test_data.csv")
+      global <- read_csv("www/global_estimators.csv")
       # global <- global[,c(1:20)]
       
       # Arrange the column names
