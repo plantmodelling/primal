@@ -162,10 +162,10 @@ shinyServer(
           rrmse <- mean(rel_diff, na.rm = T)  
           
           accuracy <- rbind(accuracy, tibble(variable = est,
-                                             r2 = summary(lm(estimation~truth))$r.squared,
-                                             rrmse = rrmse,
-                                             pearson = rcorr(estimation, truth, type = "pearson")[[1]][1,2],
-                                             spearman = rcorr(estimation, truth, type = "spearman")[[1]][1,2]))
+                                             r2 = round(summary(lm(estimation~truth))$r.squared,3),
+                                             rrmse = round(rrmse,3),
+                                             pearson = round(rcorr(estimation, truth, type = "pearson")[[1]][1,2],3),
+                                             spearman = round(rcorr(estimation, truth, type = "spearman")[[1]][1,2],3)))
         }
 
         rs$estimators <- estimators
@@ -239,8 +239,24 @@ shinyServer(
     
     output$accuracy_data <- renderTable({
       if(is.null(rs$accuracy)){return()}
-      rs$accuracy
-    }) 
+      temp <- rs$accuracy
+      names <- colnames(temp)[-c(1,3)]
+      
+      for(n in names){
+        temp[[n]][temp[[n]] >= 0.7] <- paste0('<div style="background-color: #a3cc9b;"><span>',temp[[n]][temp[[n]] >= 0.7],'</span></div>')
+        temp[[n]][temp[[n]] < 0.7 & temp[[n]] >= 0.4] <- paste0('<div style="background-color: #fbfeaa;"><span>',temp[[n]][temp[[n]] < 0.7 & temp[[n]] >= 0.4],'</span></div>')
+        temp[[n]][temp[[n]] < 0.4] <- paste0('<div style="background-color: #f3b686;"><span>',temp[[n]][temp[[n]] < 0.4],'</span></div>')
+      }
+      
+      temp$rrmse[temp$rrmse <= 0.4] <- paste0('<div style="background-color: #a3cc9b;"><span>',temp$rrmse[temp$rrmse <= 0.4],'</span></div>')
+      temp$rrmse[temp$rrmse > 0.4 & temp$rrmse <= 0.7] <- paste0('<div style="background-color: #fbfeaa;"><span>', temp$rrmse[temp$rrmse > 0.4 & temp$rrmse <= 0.7],'</span></div>')
+      temp$rrmse[temp$rrmse > 0.7] <- paste0('<div style="background-color: #f3b686;"><span>', temp$rrmse[temp$rrmse > 0.7],'</span></div>')
+      
+      print(temp)
+      
+      temp
+      
+    }, sanitize.text.function = function(x) x) 
     
     
 
