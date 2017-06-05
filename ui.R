@@ -40,6 +40,8 @@ shinyUI(fluidPage(
                       fileInput('global_file', 'Choose file with all image descriptors', accept=c('text/comma-separated-values', '.csv')),
                       fileInput('train_file', 'Choose file with training data', accept=c('text/comma-separated-values', '.csv')),
                       fileInput('test_file', 'Choose file with testing data', accept=c('text/comma-separated-values', '.csv')),
+                      checkboxInput('use_example', "Use example data", value = T, width = NULL),
+                      helpText("Data from Atkinson, Lobet et al. 2017"),
                       actionButton(inputId = "load_data", label="Load data",icon("upload"),
                                    style="color: #fff; background-color: #28aa46; border-color: #258c3e")
 

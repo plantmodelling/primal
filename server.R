@@ -38,6 +38,7 @@ shinyServer(
                          rfmodel = NULL, 
                          var_to_plot = NULL,
                          estimators = NULL,
+                         results = NULL,
                          accuracy = NULL)
     
     
@@ -91,10 +92,11 @@ shinyServer(
 
       }) 
       
-      train <- read_csv("www/training_data.csv")
-      test <- read_csv("www/test_data.csv")
-      global <- read_csv("www/global_estimators.csv")
-      # global <- global[,c(1:20)]
+      if(input$use_example){
+        train <- read_csv("www/training_data.csv")
+        test <- read_csv("www/test_data.csv")
+        global <- read_csv("www/global_estimators.csv")
+      }
       
       # Arrange the column names
       colnames(global)[colnames(global) %in% colnames(train)] <- paste0(colnames(global)[colnames(global) %in% colnames(train)],"1")
@@ -176,8 +178,18 @@ shinyServer(
     })
     
     
+    # APPLYI THE TRAINED RANDOM FOREST ON THE WHOLE DATASET
     
+    observeEvent(input$run_primal, {
+      if(is.null(rs$rfmodel)){return()}
+      
+      withProgress(message = 'Using the Trees', {
+        results <- PredictRFs(rs$rfmodel, rs$global)
+        rs$results <- cbind(rs$global[,1], results)
+          
+      })
     
+    })
     
     #------------------------------------------------------
     #------------------------------------------------------
@@ -259,6 +271,17 @@ shinyServer(
     }, sanitize.text.function = function(x) x) 
     
     
-
+    
+    
+    output$model_data <- renderTable({
+      if(is.null(rs$results)){return()}
+        rs$results
+    })
+    output$download_model_data <- downloadHandler(
+      filename = function() {"primal_results.csv"},
+      content = function(file) {
+        write.csv(rs$results, file)
+      }
+    )
   
 })
