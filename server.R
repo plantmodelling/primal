@@ -45,6 +45,19 @@ shinyServer(
     #------------------------------------------------------
     # UPDATE THE DYNAMIC FIELDS
     #------------------------------------------------------
+    
+    observe({ # Activate tab panel
+      if (input$load_data > 0) {
+        session$sendCustomMessage('activeNavs', '2. Training')
+      }
+    })
+    
+    observe({ # Activate tab panel
+      if (input$train_primal > 0) {
+        session$sendCustomMessage('activeNavs', '3. Analysis')
+      }
+    })
+    
     observe({
       if(is.null(rs$train)){return()}
       vars <- colnames(rs$train)[-1]
@@ -57,9 +70,15 @@ shinyServer(
     })    
     
     observe({
+      proxy %>% selectRows(as.numeric(input$to_plot))
+    })
+    
+    observe({
       if(is.null(rs$train)){return()}
+      s <- input$accuracy_data_rows_selected
       sel <- input$to_plot
-      if(sel == "") sel = input$type_to_guess[1]
+      if(sel == "") sel <- input$type_to_guess[1]
+      if(!is.null(s)) sel <- input$type_to_guess[s]
       updateSelectInput(session, "to_plot", choices = input$type_to_guess, selected = sel[1])
     })  
     
@@ -123,8 +142,8 @@ shinyServer(
       if(is.null(rs$train)){return()}
       
       withProgress(message = 'Training the Trees', {
-        vec.models <- seq(from=input$vecmodels[1], to=input$vecmodels[2], by=5)                 # Vector with the number of models to try
-        vec.trees <- seq(from=input$vectrees[1], to=input$vectrees[2], by=5)                  # Vector with the number of tree to try in each model
+        vec.models <- 2#seq(from=input$vecmodels[1], to=input$vecmodels[2], by=5)                 # Vector with the number of models to try
+        vec.trees <- 2#seq(from=input$vectrees[1], to=input$vectrees[2], by=5)                  # Vector with the number of tree to try in each model
         to_est <- input$type_to_guess         # Vector of parameters to estimate with the machine learning
         
         # Merge the train grond-truth and the train descriptors to perfome the random forest analysis
@@ -185,6 +204,10 @@ shinyServer(
       
       withProgress(message = 'Using the Trees', {
         results <- PredictRFs(rs$rfmodel, rs$global)
+        
+        for(i in c(1:ncol(results))){
+          results[,i] <- round(results[,i], 3)
+        }
         rs$results <- cbind(rs$global[,1], results)
           
       })
@@ -249,33 +272,49 @@ shinyServer(
     #------------------------------------------------------ 
     
     
-    output$accuracy_data <- renderTable({
+    output$accuracy_data <- DT::renderDataTable({
       if(is.null(rs$accuracy)){return()}
-      temp <- rs$accuracy
-      names <- colnames(temp)[-c(1,3)]
+      temp <- data.table(rs$accuracy[,-1])
+      rownames(temp) <- rs$accuracy %>% collect %>% .[["variable"]]
+      temp <- round(temp, 3)
       
-      for(n in names){
-        temp[[n]][temp[[n]] >= 0.7] <- paste0('<div style="background-color: #a3cc9b;"><span>',temp[[n]][temp[[n]] >= 0.7],'</span></div>')
-        temp[[n]][temp[[n]] < 0.7 & temp[[n]] >= 0.4] <- paste0('<div style="background-color: #fbfeaa;"><span>',temp[[n]][temp[[n]] < 0.7 & temp[[n]] >= 0.4],'</span></div>')
-        temp[[n]][temp[[n]] < 0.4] <- paste0('<div style="background-color: #f3b686;"><span>',temp[[n]][temp[[n]] < 0.4],'</span></div>')
-      }
+      brks <- quantile(temp, probs = seq(.05, .95, .05), na.rm = TRUE)
+      clrs <- round(seq(255, 40, length.out = length(brks) + 1), 0) %>%
+        {paste0("rgb(", .,",250 ,", ., ")")}
       
-      temp$rrmse[temp$rrmse <= 0.4] <- paste0('<div style="background-color: #a3cc9b;"><span>',temp$rrmse[temp$rrmse <= 0.4],'</span></div>')
-      temp$rrmse[temp$rrmse > 0.4 & temp$rrmse <= 0.7] <- paste0('<div style="background-color: #fbfeaa;"><span>', temp$rrmse[temp$rrmse > 0.4 & temp$rrmse <= 0.7],'</span></div>')
-      temp$rrmse[temp$rrmse > 0.7] <- paste0('<div style="background-color: #f3b686;"><span>', temp$rrmse[temp$rrmse > 0.7],'</span></div>')
+      DT::datatable(temp, 
+                    options = list(scrollX = TRUE, 
+                                   pageLength = 5
+                      ),
+                    selection=list(mode="single")) %>% 
+        formatStyle(names(temp), backgroundColor = styleInterval(brks, clrs))
       
-      print(temp)
-      
-      temp
-      
-    }, sanitize.text.function = function(x) x) 
+    }) 
+    
+    proxy = dataTableProxy('accuracy_data')
     
     
+    df = as.data.frame(cbind(matrix(round(rnorm(50), 3), 10), sample(0:1, 10, TRUE)))
+    brks <- quantile(df, probs = seq(.05, .95, .05), na.rm = TRUE)
+    clrs <- round(seq(255, 40, length.out = length(brks) + 1), 0) %>%
+      {paste0("rgb(", .,",250 ,", ., ")")}
+    datatable(df) %>% formatStyle(names(df), backgroundColor = styleInterval(brks, clrs))
     
     
-    output$model_data <- renderTable({
-      if(is.null(rs$results)){return()}
-        rs$results
+    output$train_data <- DT::renderDataTable({
+      if(is.null(rs$test)){return()}
+      DT::datatable(rs$test, options = list(scrollX = TRUE, pageLength = 5))
+    })
+    
+    output$test_data <- DT::renderDataTable({
+      if(is.null(rs$train)){return()}
+      DT::datatable(rs$train, options = list(scrollX = TRUE, pageLength = 5))
+    })
+    
+    output$model_data <- DT::renderDataTable({
+        if(is.null(rs$results)){return()}
+        DT::datatable(rs$results, options = list(scrollX = TRUE, pageLength = 5))
+        
     })
     output$download_model_data <- downloadHandler(
       filename = function() {"primal_results.csv"},
@@ -284,4 +323,22 @@ shinyServer(
       }
     )
   
+    
+    #------------------------------------------------------
+    #------------------------------------------------------
+    # TABLES
+    #------------------------------------------------------
+    #------------------------------------------------------    
+    
+    output$text0 <- renderText({ 
+      if(is.null(rs$train)){return()}
+      return(HTML("If you are happy with the loaded training and test tables, 
+                  you can go to the next step (2. Training)"))
+    })
+    output$text1 <- renderText({ 
+      if(is.null(rs$accuracy)){return()}
+      return(HTML("If you are happy with the accuracy of the Random Forest, go to the next step. 
+                  If not, you might want to include more images into your training dataset and start over."))
+    })
+    
 })

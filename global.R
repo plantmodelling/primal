@@ -24,8 +24,9 @@
 
 
 
-
+# install.packages("V8")
 library(tidyverse)
 library(Hmisc)
+library(DT)
 source("www/machine_learning.r")  
 PkgTest(c("randomForest", "ggplot2", "gridExtra"))

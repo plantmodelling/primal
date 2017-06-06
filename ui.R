@@ -27,92 +27,120 @@ library(shiny)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
-  
+
   # Application title
-  titlePanel("Pipeline of Root Image analysis using MAchine Learning >> PRIMAL"),
-  tags$hr(),
-  fluidRow(
-    column(3, 
-           tabsetPanel(
-             
-             tabPanel("1. Loading",
-                      tags$hr(),
-                      fileInput('global_file', 'Choose file with all image descriptors', accept=c('text/comma-separated-values', '.csv')),
-                      fileInput('train_file', 'Choose file with training data', accept=c('text/comma-separated-values', '.csv')),
-                      fileInput('test_file', 'Choose file with testing data', accept=c('text/comma-separated-values', '.csv')),
-                      checkboxInput('use_example', "Use example data", value = T, width = NULL),
-                      helpText("Data from Atkinson, Lobet et al. 2017"),
-                      actionButton(inputId = "load_data", label="Load data",icon("upload"),
-                                   style="color: #fff; background-color: #28aa46; border-color: #258c3e")
-
-             ),
-             tabPanel("2. Training",
-                      tags$hr(),
-                      selectInput("type_to_guess", label="Variables to use in analysis", choices = c("Load datafile"), 
-                                             selected = NULL, multiple = TRUE, width="100%"),
-                     sliderInput("vecmodels", "Number of models to try:",min = 5, max = 50, value = c(5,5), step = 5),
-                     sliderInput("vectrees", "Number of trees in each model:",min = 5, max = 50, value = c(5,5), step = 5),
-                     actionButton(inputId = "train_primal", label="Train PRIMAL",icon("magic"), 
-                                  style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
-                            
-             ),
-             tabPanel("3. Analysing",
-                      tags$hr(),
-                      helpText("If ylu are satisfied with the output of the training, you can now applied to the rest of the dataset"),
-                      tags$hr(),
-                      actionButton(inputId = "run_primal", label="Unleash PRIMAL",icon("resistance"), 
-                                   style="color: #fff; background-color: #d9534f; border-color: #d43f3a")
-             )
-           ),
-           tags$hr(),
-           img(src='logo.jpg', align = "left", width="80%")
+  navbarPage("PRIMAL",
+    tabPanel("1. Loading", id="tab1",
+      fluidRow(
+        column(3, 
+                fileInput('global_file', 'Choose file with all image descriptors', accept=c('text/comma-separated-values', '.csv')),
+                fileInput('train_file', 'Choose file with training data', accept=c('text/comma-separated-values', '.csv')),
+                fileInput('test_file', 'Choose file with testing data', accept=c('text/comma-separated-values', '.csv')),
+                checkboxInput('use_example', "Use example data", value = T, width = NULL),
+                helpText("Data from Atkinson, Lobet et al. 2017"),
+                actionButton(inputId = "load_data", label="Load data",icon("upload"),
+                             style="color: #fff; background-color: #28aa46; border-color: #258c3e"),
+               tags$hr(),
+               textOutput("text0"),
+               tags$head(tags$style("#text0{color: #28aa46;
+                                   font-weight: bold;
+                                   }"
+               )
+               ),
+               tags$hr(),
+               img(src='logo.jpg', align = "left", width="80%")
+        ),
+        column(5, 
+               h4("Training datatable"),
+               tags$hr(),
+               helpText("This table contains the data that will be used for the training the Random Forest model"),
+               tags$hr(),
+               DT::dataTableOutput('train_data')
+        ),
+        column(4, 
+               h4("Testing datatable"),
+               tags$hr(),
+               helpText("This table contains the data that will be used for the testing the Random Forest model"),
+               tags$hr(),
+               DT::dataTableOutput('test_data')
+        )
+      )
     ),
-    column(4,
-           selectInput("to_plot", label = "Variable to plot", choices = c("Load datafile")),
-           plotOutput("regression_plot"),
-           selectInput("indicator", label = "Indicator to plot", choices = c("R-square"="r2",
-                                                                           "Mean relative error"="rrmse",
-                                                                           "Pearson correlation"="pearson", 
-                                                                           "Spearman Ranked correlation"="spearman")),
-           plotOutput("accuracy_plot")
+    tabPanel("2. Training", id="tab2",
+        fluidRow(
+          column(3, 
+              selectInput("type_to_guess", label="Variables to use in analysis", choices = c("Load datafile"), 
+                          selected = NULL, multiple = TRUE, width="100%"),
+              sliderInput("vecmodels", "Number of models to try:",min = 5, max = 50, value = c(5,5), step = 5),
+              sliderInput("vectrees", "Number of trees in each model:",min = 5, max = 50, value = c(5,5), step = 5),
+              actionButton(inputId = "train_primal", label="Train PRIMAL",icon("magic"), 
+                           style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+              tags$hr(),
+              textOutput("text1"),
+              tags$head(tags$style("#text1{color: #28aa46;
+                                   font-weight: bold;
+                                   }"
+                         )
+              ),
+              tags$hr(),
+              img(src='logo.jpg', align = "left", width="80%")
+          ),
+          column(5,
+                 selectInput("to_plot", label = "Variable to plot", choices = c("Load datafile")),
+                 plotOutput("regression_plot")
+          ),
+          column(4,
+                 DT::dataTableOutput('accuracy_data'),
+                 tags$hr(),
+                 selectInput("indicator", label = "Indicator to plot", choices = c("R-square"="r2",
+                                                                                   "Mean relative error"="rrmse",
+                                                                                   "Pearson correlation"="pearson", 
+                                                                                   "Spearman Ranked correlation"="spearman")),
+                 plotOutput("accuracy_plot")
+          )
+        )
     ),
-    column(5,
-           tabsetPanel(
-
-             tabPanel("Random Forest accuracy",
-                      tags$hr(),
-                      helpText("This table contains the accuracy parameters for the Random Forest model"),
-                      tags$hr(),
-                      tableOutput('accuracy_data'),
-                      value=2
-             ),
-             
-             tabPanel("Random Forest estimators",
-                      tags$hr(),
-                      helpText("This table contains the data estimated using the Random Forest model"),
-                      downloadButton('download_model_data', 'Download full table'),
-                      tags$hr(),
-                      tableOutput('model_data'),
-                      value=2
-             ),
-             tabPanel("About",
-                      h4("What is PRIMAL"),
-                      helpText("PRIMAL is "),
-                      tags$hr(),
-                      h4("How to use PRIMAL"),
-                      helpText("We tried to make PRIMAL as user-friendly as possible. However, if you have any questions regading its use, you can check our webpage."),
-                      actionButton(inputId='ab1', label="PRIMAL webpage", icon = icon("cogs"), onclick ="window.open('https://mecharoot.github.io/', '_blank')"),
-                      tags$hr(),
-                      h4("How to cite PRIMAL"),
-                      tags$strong("A novel hydraulic model of plant root cross-sections brings biological information in soil-plant water dynamics A novel hydraulic model of plant root cross-sections brings biological information in soil-plant water dynamics"),
-                      helpText("Valentin Couvreur, Marc Faget, Guillaume Lobet, Mathieu Javaux, François Chaumont and Xavier Draye"),
-                      actionButton(inputId='ab1', label="View paper", icon = icon("flask"), onclick ="window.open('#', '_blank')"),                                              
-                      tags$hr(),
-                      h4("Licence"),
-                      helpText("PRIMAL is released under a GPL licence, which means that redistribution and use in source and binary forms, with or without modification, are permitted under the GNU General Public License v3 and provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.")                    
-             )
-             
-           )
+    tabPanel("3. Analysis", id="tab3",
+       fluidRow(
+         column(3, 
+            helpText("If you are satisfied with the output of the training, you can now applied to the rest of the dataset"),
+            tags$hr(),
+            actionButton(inputId = "run_primal", label="Unleash PRIMAL",icon("resistance"), 
+                         style="color: #fff; background-color: #d9534f; border-color: #d43f3a"),
+            tags$hr(),
+            img(src='logo.jpg', align = "left", width="80%")
+         ),
+         column(9, 
+             h4("Random Forest estimators"),
+              tags$hr(),
+              helpText("This table contains the data estimated using the Random Forest model"),
+              downloadButton('download_model_data', 'Download full table'),
+              tags$hr(),
+              DT::dataTableOutput('model_data'),
+              value=2
+         )
+       )
+    ),
+    tabPanel("About", id="tab4",
+      fluidRow(
+        column(3),
+        column(6,
+            h4("What is PRIMAL"),
+            helpText("PRIMAL is "),
+            tags$hr(),
+            h4("How to use PRIMAL"),
+            helpText("We tried to make PRIMAL as user-friendly as possible. However, if you have any questions regading its use, you can check our webpage."),
+            actionButton(inputId='ab1', label="PRIMAL webpage", icon = icon("cogs"), onclick ="window.open('https://mecharoot.github.io/', '_blank')"),
+            tags$hr(),
+            h4("How to cite PRIMAL"),
+            tags$strong("A novel hydraulic model of plant root cross-sections brings biological information in soil-plant water dynamics A novel hydraulic model of plant root cross-sections brings biological information in soil-plant water dynamics"),
+            helpText("Valentin Couvreur, Marc Faget, Guillaume Lobet, Mathieu Javaux, François Chaumont and Xavier Draye"),
+            actionButton(inputId='ab1', label="View paper", icon = icon("flask"), onclick ="window.open('#', '_blank')"),                                              
+            tags$hr(),
+            h4("Licence"),
+            helpText("PRIMAL is released under a GPL licence, which means that redistribution and use in source and binary forms, with or without modification, are permitted under the GNU General Public License v3 and provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.")                    
+          )
+      )
     )
   )
 ))
