@@ -39,7 +39,8 @@ shinyServer(
                          var_to_plot = NULL,
                          estimators = NULL,
                          results = NULL,
-                         accuracy = NULL)
+                         accuracy = NULL,
+                         ground_truth = NULL)
     
     
     #------------------------------------------------------
@@ -82,6 +83,13 @@ shinyServer(
       updateSelectInput(session, "to_plot", choices = input$type_to_guess, selected = sel[1])
     })  
     
+    observe({
+      if(is.null(rs$train)){return()}
+      sel <- input$to_plot_1
+      if(sel == "") sel <- input$type_to_guess[1]
+      updateSelectInput(session, "to_plot_1", choices = input$type_to_guess, selected = sel[1])
+    })  
+    
     
     
     
@@ -102,26 +110,45 @@ shinyServer(
       withProgress(message = 'Loading data', {
         
         inGlobal <- input$global_file
-        inTest <- input$test_file
+        # inTest <- input$test_file
         inTrain <- input$train_file
 
         if(!is.null(inGlobal)) global <- read_csv(inGlobal$datapath)
-        if(!is.null(inTest)) test <- read_csv(inTest$datapath)
+        # if(!is.null(inTest)) test <- read_csv(inTest$datapath)
         if(!is.null(inTrain)) train <- read_csv(inTrain$datapath)
 
       }) 
       
       if(input$use_example){
-        train <- read_csv("www/training_data.csv")
-        test <- read_csv("www/test_data.csv")
-        global <- read_csv("www/global_estimators.csv")
+        ground_truth <- read_csv("www/groundtruth_data.csv")
+        global <<- read_csv("www/global_estimators.csv")
       }
+      if(!is.null(ground_truth) & !is.null(global)){
+        rs$ground_truth <- ground_truth
+        rs$global <- global
+      }else{
+        
+      }
+    })
+    
+    observe({
+      if(is.null(rs$ground_truth) | is.null(rs$global)) return(NULL) 
+
+      train_id <- sample(c(1:nrow(rs$ground_truth)), size = round(nrow(rs$ground_truth) * (input$test_number/100)))
+
+      train <- rs$ground_truth[train_id,]
+      test <- rs$ground_truth[-train_id,]
       
       # Arrange the column names
       colnames(global)[colnames(global) %in% colnames(train)] <- paste0(colnames(global)[colnames(global) %in% colnames(train)],"1")
       colnames(global)[1] <- "id"
       colnames(train)[1] <- "id"
       colnames(test)[1] <- "id"
+      
+      # Order the data frame based on their id
+      test <- test[order(test$id),]
+      train <- train[order(train$id),]
+      global <- global[order(global$id),]      
       
       if(!is.null(train) & !is.null(test) & !is.null(global)){
         rs$train <- train
@@ -142,16 +169,17 @@ shinyServer(
       if(is.null(rs$train)){return()}
       
       withProgress(message = 'Training the Trees', {
-        vec.models <- 2#seq(from=input$vecmodels[1], to=input$vecmodels[2], by=5)                 # Vector with the number of models to try
-        vec.trees <- 2#seq(from=input$vectrees[1], to=input$vectrees[2], by=5)                  # Vector with the number of tree to try in each model
+        vec.models <- seq(from=input$vecmodels[1], to=input$vecmodels[2], by=5)                 # Vector with the number of models to try
+        vec.trees <- seq(from=input$vectrees[1], to=input$vectrees[2], by=5)                  # Vector with the number of tree to try in each model
         to_est <- input$type_to_guess         # Vector of parameters to estimate with the machine learning
+        # to_est <- c("tot_root_length")         # Vector of parameters to estimate with the machine learning
         
         # Merge the train grond-truth and the train descriptors to perfome the random forest analysis
         id <- colnames(rs$global)[1]
         train <- merge(rs$train, rs$global, by=id)
         test <- rs$global[rs$global[[id]] %in% rs$test[[id]],]
         rs$test <- rs$test[rs$test[[id]] %in% rs$global[[id]],]
-        print(dim(test))
+      
         
         # Indices of the descriptors columns to used in the training. We do not take the first one as it contain the image id
         descrs <- colnames(rs$global)[-1]
@@ -239,6 +267,28 @@ shinyServer(
       pl
       
     })
+    
+    output$distribution_plot <- renderPlot({
+      if(is.null(rs$train)){return()}
+      
+      temp <- rs$train
+      temp$value <- temp[[input$to_plot_1]]
+      
+      temp2 <- rs$test
+      temp2$value <- temp2[[input$to_plot_1]]
+      
+      
+      pl <- ggplot(temp, aes(value)) + 
+        geom_density(col="gray", fill="gray", alpha=0.5) + 
+        geom_vline(xintercept = temp2$value, col="red", alpha=0.5) + 
+        ylab("") + 
+        xlab(input$to_plot_1) + 
+        ggtitle(input$to_plot_1) + 
+        theme_classic() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1), text=element_text(size=15))
+      pl
+      
+    })      
     
     
     output$accuracy_plot <- renderPlot({
@@ -330,11 +380,33 @@ shinyServer(
     #------------------------------------------------------
     #------------------------------------------------------    
     
+    output$test_text <- renderText({ 
+      if(is.null(rs$test)){return()}
+      return(HTML(paste0("Test datatable contains ", nrow(rs$test), " rows")))
+    })
+    
+    output$train_text <- renderText({ 
+      if(is.null(rs$train)){return()}
+      return(HTML(paste0("Training datatable contains ", nrow(rs$train), " rows")))
+    })
+    
+    output$test_text_1 <- renderText({ 
+      if(is.null(rs$test)){return()}
+      return(HTML(paste0("Test datatable contains ", nrow(rs$test), " rows")))
+    })
+    
+    output$train_text_1 <- renderText({ 
+      if(is.null(rs$train)){return()}
+      return(HTML(paste0("Training datatable contains ", nrow(rs$train), " rows")))
+    })    
+    
     output$text0 <- renderText({ 
       if(is.null(rs$train)){return()}
       return(HTML("If you are happy with the loaded training and test tables, 
                   you can go to the next step (2. Training)"))
     })
+    
+    
     output$text1 <- renderText({ 
       if(is.null(rs$accuracy)){return()}
       return(HTML("If you are happy with the accuracy of the Random Forest, go to the next step. 

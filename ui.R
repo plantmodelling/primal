@@ -26,20 +26,18 @@
 library(shiny)
 
 # Define UI for application that draws a histogram
-shinyUI(fluidPage(
+shinyUI(fluidPage(theme = "bootstrap.css",
 
   # Application title
   navbarPage("PRIMAL",
     tabPanel("1. Loading", id="tab1",
       fluidRow(
-        column(3, 
+        column(4, 
                 fileInput('global_file', 'Choose file with all image descriptors', accept=c('text/comma-separated-values', '.csv')),
-                fileInput('train_file', 'Choose file with training data', accept=c('text/comma-separated-values', '.csv')),
-                fileInput('test_file', 'Choose file with testing data', accept=c('text/comma-separated-values', '.csv')),
-                checkboxInput('use_example', "Use example data", value = T, width = NULL),
-                helpText("Data from Atkinson, Lobet et al. 2017"),
-                actionButton(inputId = "load_data", label="Load data",icon("upload"),
-                             style="color: #fff; background-color: #28aa46; border-color: #258c3e"),
+                fileInput('train_file', 'Choose file with ground-truth data', accept=c('text/comma-separated-values', '.csv')),
+                # fileInput('test_file', 'Choose file with testing data', accept=c('text/comma-separated-values', '.csv')),
+               checkboxInput('use_example', "Use example data from Atkinson, Lobet et al. 2017", value = T, width = NULL),
+                bsButton(inputId = "load_data", type = "action", style="primary", label="Load data",icon("upload")),
                tags$hr(),
                textOutput("text0"),
                tags$head(tags$style("#text0{color: #28aa46;
@@ -50,31 +48,62 @@ shinyUI(fluidPage(
                tags$hr(),
                img(src='logo.jpg', align = "left", width="80%")
         ),
-        column(5, 
-               h4("Training datatable"),
+        column(7, 
+               h4("Training / testing dataset"),
                tags$hr(),
-               helpText("This table contains the data that will be used for the training the Random Forest model"),
+               sliderInput('test_number', 'What proportion of the ground-truth data to use for the training [%]', min=5, max=95, value = 95), 
+               textOutput("test_text"),
+               tags$head(tags$style("#test_text{color: #28aa46;
+                                   font-weight: bold;
+                                    }"
+               )),
+               textOutput("train_text"),
+               tags$head(tags$style("#train_text{color: #28aa46;
+                                   font-weight: bold;
+                                    }"
+               )),
                tags$hr(),
-               DT::dataTableOutput('train_data')
-        ),
-        column(4, 
-               h4("Testing datatable"),
+               selectInput("to_plot_1", label = "Variable to plot", choices = c("Load datafile")),
+               plotOutput("distribution_plot"),
                tags$hr(),
-               helpText("This table contains the data that will be used for the testing the Random Forest model"),
-               tags$hr(),
-               DT::dataTableOutput('test_data')
-        )
+               helpText("Distribution of the ground-truth data for the training (grey shape) and test (red lines) dataset.
+                        This allows you to check wether the test data falls corretly within the scope of the training data.")
+               
+               # DT::dataTableOutput('train_data')
+        )#,
+        # column(4, 
+        #        h4("Testing datatable"),
+        #        tags$hr(),
+        #        helpText("This table contains the data that will be used for the testing the Random Forest model"),
+        #        tags$hr(),
+        #        textOutput("test_text"),
+        #        tags$head(tags$style("#test_text{color: #28aa46;
+        #                            font-weight: bold;
+        #                             }"
+        #        )),
+        #        tags$hr(),
+        #        DT::dataTableOutput('test_data')
+        # )
       )
     ),
     tabPanel("2. Training", id="tab2",
         fluidRow(
           column(3, 
+                 textOutput("test_text_1"),
+                 tags$head(tags$style("#test_text_1{color: #28aa46;
+                                      font-weight: bold;
+                                      }"
+               )),
+               textOutput("train_text_1"),
+               tags$head(tags$style("#train_text_1{color: #28aa46;
+                                    font-weight: bold;
+                                    }"
+               )),                 
               selectInput("type_to_guess", label="Variables to use in analysis", choices = c("Load datafile"), 
                           selected = NULL, multiple = TRUE, width="100%"),
               sliderInput("vecmodels", "Number of models to try:",min = 5, max = 50, value = c(5,5), step = 5),
               sliderInput("vectrees", "Number of trees in each model:",min = 5, max = 50, value = c(5,5), step = 5),
-              actionButton(inputId = "train_primal", label="Train PRIMAL",icon("magic"), 
-                           style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+              bsButton(inputId = "train_primal", type="action", style="success", label="Train PRIMAL",icon("magic")),
               tags$hr(),
               textOutput("text1"),
               tags$head(tags$style("#text1{color: #28aa46;
@@ -105,8 +134,7 @@ shinyUI(fluidPage(
          column(3, 
             helpText("If you are satisfied with the output of the training, you can now applied to the rest of the dataset"),
             tags$hr(),
-            actionButton(inputId = "run_primal", label="Unleash PRIMAL",icon("resistance"), 
-                         style="color: #fff; background-color: #d9534f; border-color: #d43f3a"),
+            bsButton(inputId = "run_primal", type= "action", style = "warning", label="Unleash PRIMAL",icon("resistance")),
             tags$hr(),
             img(src='logo.jpg', align = "left", width="80%")
          ),
@@ -126,15 +154,15 @@ shinyUI(fluidPage(
         column(3),
         column(6,
             h4("What is PRIMAL"),
-            helpText("PRIMAL is "),
+            helpText("PRIMAL stands for a Pipeline of Root Image analysis using MAchine Learning. In short, the pipeline use Machine Learning techniques (Random Forest in particular), tu streamline the image analysis of large root dataset. PRIMAL needs only a subset of the data to be analysed manually, instead of the full dataset. That subset is then used to train the algorithm behind PRIMAL the predict the parameters of interest, based on automatically acquired descriptors."),
             tags$hr(),
             h4("How to use PRIMAL"),
             helpText("We tried to make PRIMAL as user-friendly as possible. However, if you have any questions regading its use, you can check our webpage."),
-            actionButton(inputId='ab1', label="PRIMAL webpage", icon = icon("cogs"), onclick ="window.open('https://mecharoot.github.io/', '_blank')"),
+            actionButton(inputId='ab1', label="PRIMAL webpage", icon = icon("cogs"), onclick ="window.open('https://plantmodelling.github.io/primal/', '_blank')"),
             tags$hr(),
             h4("How to cite PRIMAL"),
-            tags$strong("A novel hydraulic model of plant root cross-sections brings biological information in soil-plant water dynamics A novel hydraulic model of plant root cross-sections brings biological information in soil-plant water dynamics"),
-            helpText("Valentin Couvreur, Marc Faget, Guillaume Lobet, Mathieu Javaux, François Chaumont and Xavier Draye"),
+            tags$strong("Combining semi-automated root image analysis techniques with machine learning algorithms to accelerate large scale genetic root studies."),
+            helpText("Jonathan A. Atkinson*, Guillaume Lobet*, Manuel Noll, Markus Griffiths, Darren M. Wells"),
             actionButton(inputId='ab1', label="View paper", icon = icon("flask"), onclick ="window.open('#', '_blank')"),                                              
             tags$hr(),
             h4("Licence"),

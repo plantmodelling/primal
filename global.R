@@ -22,11 +22,5 @@
 # 
 # NOTE: The GPL.v3 license requires that all derivative work is distributed under the same license. That means that if you use this source code in any other program, you can only distribute that program with the full source code included and licensed under a GPL license.
 
-
-
-# install.packages("V8")
-library(tidyverse)
-library(Hmisc)
-library(DT)
 source("www/machine_learning.r")  
-PkgTest(c("randomForest", "ggplot2", "gridExtra"))
+PkgTest(c("randomForest", "tidyverse", "gridExtra", "Hmisc", "DT", "shinyBS", "data.table"))
