@@ -30,7 +30,7 @@ shinyUI(fluidPage(theme = "bootstrap.css",
 
   # Application title
   navbarPage("PRIMAL",
-    tabPanel("1. Loading", id="tab1",
+    tabPanel("Load data", id="tab1", icon=icon("upload"),
       fluidRow(
         column(4, 
                 fileInput('global_file', 'Choose file with all image descriptors', accept=c('text/comma-separated-values', '.csv')),
@@ -86,7 +86,7 @@ shinyUI(fluidPage(theme = "bootstrap.css",
         # )
       )
     ),
-    tabPanel("2. Training", id="tab2",
+    tabPanel("Train the model", id="tab2", icon = icon('magic'),
         fluidRow(
           column(3, 
                  textOutput("test_text_1"),
@@ -129,7 +129,7 @@ shinyUI(fluidPage(theme = "bootstrap.css",
           )
         )
     ),
-    tabPanel("3. Analysis", id="tab3",
+    tabPanel("Analyse the full dataset", id="tab3",icon = icon("resistance"),
        fluidRow(
          column(3, 
             helpText("If you are satisfied with the output of the training, you can now applied to the rest of the dataset"),
@@ -149,7 +149,7 @@ shinyUI(fluidPage(theme = "bootstrap.css",
          )
        )
     ),
-    tabPanel("About", id="tab4",
+    tabPanel("About", id="tab4", icon=icon("plus-circle"),
       fluidRow(
         column(3),
         column(6,
