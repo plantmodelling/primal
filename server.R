@@ -115,13 +115,29 @@ shinyServer(
 
         if(!is.null(inGlobal)) global <- read_csv(inGlobal$datapath)
         # if(!is.null(inTest)) test <- read_csv(inTest$datapath)
-        if(!is.null(inTrain)) train <- read_csv(inTrain$datapath)
+        if(!is.null(inTrain)) ground_truth <- read_csv(inTrain$datapath)
 
       }) 
       
       if(input$use_example){
         ground_truth <- read_csv("www/groundtruth_data.csv")
-        global <<- read_csv("www/global_estimators.csv")
+        global <- read_csv("www/global_estimators.csv")
+        
+        # ground_truth <- read_csv("www/groundtruth_data copy.csv")
+        # global <- read_csv("www/global_estimators copy.csv")
+        # 
+        # ground_truth <- ground_truth[ground_truth$image %in% global$image,]
+        # 
+        # global <- global[order(global$image),]
+        # ground_truth <- ground_truth[order(ground_truth$image),]
+        # 
+        # 
+        # global$image <- c(1:nrow(global))
+        # ground_truth$image <- c(1:nrow(ground_truth))
+        # 
+        # write_csv(global, "www/global_estimators.csv")
+        # write_csv(ground_truth, "www/groundtruth_data.csv")
+        # 
       }
       if(!is.null(ground_truth) & !is.null(global)){
         rs$ground_truth <- ground_truth
@@ -131,11 +147,12 @@ shinyServer(
       }
     })
     
+    
     observe({
       if(is.null(rs$ground_truth) | is.null(rs$global)) return(NULL) 
 
       train_id <- sample(c(1:nrow(rs$ground_truth)), size = round(nrow(rs$ground_truth) * (input$test_number/100)))
-
+      global <- rs$global
       train <- rs$ground_truth[train_id,]
       test <- rs$ground_truth[-train_id,]
       
