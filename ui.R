@@ -129,12 +129,12 @@ shinyUI(fluidPage(theme = "bootstrap.css",
           )
         )
     ),
-    tabPanel("Analyse the full dataset", id="tab3",icon = icon("resistance"),
+    tabPanel("Analyse the full dataset", id="tab3",icon = icon("bug"),
        fluidRow(
          column(3, 
             helpText("If you are satisfied with the output of the training, you can now applied to the rest of the dataset"),
             tags$hr(),
-            bsButton(inputId = "run_primal", type= "action", style = "warning", label="Unleash PRIMAL",icon("resistance")),
+            bsButton(inputId = "run_primal", type= "action", style = "warning", label="Unleash PRIMAL",icon("bug")),
             tags$hr(),
             img(src='logo.jpg', align = "left", width="80%")
          ),
