@@ -163,7 +163,7 @@ shinyUI(fluidPage(theme = "bootstrap.css",
             h4("How to cite PRIMAL"),
             tags$strong("Combining semi-automated root image analysis techniques with machine learning algorithms to accelerate large scale genetic root studies."),
             helpText("Jonathan A. Atkinson*, Guillaume Lobet*, Manuel Noll, Markus Griffiths, Darren M. Wells"),
-            actionButton(inputId='ab1', label="View paper", icon = icon("flask"), onclick ="window.open('#', '_blank')"),                                              
+            actionButton(inputId='ab1', label="View paper", icon = icon("flask"), onclick ="window.open('http://dx.doi.org/10.1093/gigascience/gix084', '_blank')"),                                              
             tags$hr(),
             h4("Licence"),
             helpText("PRIMAL is released under a GPL licence, which means that redistribution and use in source and binary forms, with or without modification, are permitted under the GNU General Public License v3 and provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.")                    
