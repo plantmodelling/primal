@@ -30,7 +30,7 @@ shinyUI(fluidPage(theme = "bootstrap.css",
 
   # Application title
   navbarPage("PRIMAL",
-    tabPanel("Load data", id="tab1", icon=icon("upload"),
+    tabPanel("Load data", id="tab1", icon = icon("upload"),
       fluidRow(
         column(4, 
                 fileInput('global_file', 'Choose file with all image descriptors', accept=c('text/comma-separated-values', '.csv')),
@@ -101,8 +101,8 @@ shinyUI(fluidPage(theme = "bootstrap.css",
                )),                 
               selectInput("type_to_guess", label="Variables to use in analysis", choices = c("Load datafile"), 
                           selected = NULL, multiple = TRUE, width="100%"),
-              sliderInput("vecmodels", "Number of models to try:",min = 5, max = 50, value = c(5,5), step = 5),
-              sliderInput("vectrees", "Number of trees in each model:",min = 5, max = 50, value = c(5,5), step = 5),
+              sliderInput("vecmodels", "Number of models to try:",min = 5, max = 50, value = c(5), step = 5),
+              sliderInput("vectrees", "Number of trees in each model:",min = 5, max = 200, value = c(100), step = 5),
               bsButton(inputId = "train_primal", type="action", style="success", label="Train PRIMAL",icon("magic")),
               tags$hr(),
               textOutput("text1"),
@@ -172,3 +172,7 @@ shinyUI(fluidPage(theme = "bootstrap.css",
     )
   )
 ))
+
+
+
+

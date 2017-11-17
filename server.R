@@ -174,6 +174,7 @@ shinyServer(
       }else{
         
       }
+      message("data re arranged")
     })
     
     
@@ -186,8 +187,8 @@ shinyServer(
       if(is.null(rs$train)){return()}
       
       withProgress(message = 'Training the Trees', {
-        vec.models <- seq(from=input$vecmodels[1], to=input$vecmodels[2], by=5)                 # Vector with the number of models to try
-        vec.trees <- seq(from=input$vectrees[1], to=input$vectrees[2], by=5)                  # Vector with the number of tree to try in each model
+        vec.models <- input$vecmodels[1]#seq(from=input$vecmodels[1], to=input$vecmodels[2], by=5)                 # Vector with the number of models to try
+        vec.trees <- input$vectrees[1]#seq(from=input$vectrees[1], to=input$vectrees[2], by=5)                  # Vector with the number of tree to try in each model
         to_est <- input$type_to_guess         # Vector of parameters to estimate with the machine learning
         # to_est <- c("tot_root_length")         # Vector of parameters to estimate with the machine learning
         
@@ -204,18 +205,38 @@ shinyServer(
         to_est_ind <- match(to_est, colnames(train))
         descr_ind <- c(descr_ind, to_est_ind)
         
+        print(to_est_ind)
+        print(descr_ind)
+        print(head(train))
+        print(vec.models)
+        print(vec.trees)
+        
+        # write.csv(train, "~/Desktop/test.csv")
+        # train <- read.csv("~/Desktop/test.csv")
+        # vec.models = 10 
+        # vec.trees = 10 
+        # to_est_ind = c(2:7)
+        # to_est <- to_est_ind
+        # descr_ind = c(2:16)
+        
         models <- GenerateModels(fname = NULL, 
                                  mat.data = train, 
                                  vec.models = vec.models, 
                                  vec.trees = vec.trees, 
                                  vec.f = to_est_ind, 
-                                 vec.p = descr_ind)
+                                 vec.p = sort(descr_ind))
+        
+        message("------ models generated")
         
         vec.weights <- rep(1, length(to_est))
         
         model <- SelectModel(models, vec.weights)
+        
+        message("------ models selected")
+        
         estimators <- PredictRFs(model, test)
         
+        message("------ models used")
         
         # Compute accuracy estimator for each variable
         accuracy <- NULL
